@@ -33,9 +33,14 @@ def softmax_loss_naive(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
+    num_train=X.shape[0]
+    Z=X.dot(W)
+    A=np.exp(Z)/np.sum(np.exp(Z),axis=1).reshape(num_train,1)
+    bin_y=np.zeros(A.shape)
+    bin_y[range(num_train),y]=1
+    
+    loss+=np.sum(-np.log(A[range(num_train),y]))/num_train+reg*np.sum(W**2)
+    dW+=X.T.dot(A-bin_y)/num_train+reg*2*W
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
@@ -58,7 +63,14 @@ def softmax_loss_vectorized(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    num_train=X.shape[0]
+    Z=X.dot(W)
+    A=np.exp(Z)/np.sum(np.exp(Z),axis=1).reshape(num_train,1)
+    bin_y=np.zeros(A.shape)
+    bin_y[range(num_train),y]=1
+    
+    loss+=np.sum(-np.log(A[range(num_train),y]))/num_train+reg*np.sum(W**2)
+    dW+=X.T.dot(A-bin_y)/num_train+reg*2*W
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

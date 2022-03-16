@@ -2,6 +2,8 @@ from __future__ import print_function
 
 from builtins import range
 from builtins import object
+from dataclasses import replace
+from tkinter import W
 import numpy as np
 from ..classifiers.linear_svm import *
 from ..classifiers.softmax import *
@@ -65,7 +67,9 @@ class LinearClassifier(object):
             # replacement is faster than sampling without replacement.              #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+            indices=np.random.choice(num_train,batch_size,replace=False)
+            X_batch=X[indices,:]
+            y_batch=y[indices]
             pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -80,7 +84,7 @@ class LinearClassifier(object):
             # Update the weights using the gradient and the learning rate.          #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+            self.W=self.W-learning_rate*grad
             pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -110,7 +114,7 @@ class LinearClassifier(object):
         # Implement this method. Store the predicted labels in y_pred.            #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        y_pred=np.argmax(X.dot(self.W),axis=1)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

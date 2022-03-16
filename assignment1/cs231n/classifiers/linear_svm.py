@@ -1,4 +1,5 @@
 from builtins import range
+from traceback import print_tb
 import numpy as np
 from random import shuffle
 from past.builtins import xrange
@@ -37,14 +38,16 @@ def svm_loss_naive(W, X, y, reg):
             margin = scores[j] - correct_class_score + 1  # note delta = 1
             if margin > 0:
                 loss += margin
+                dW[:,j]+=X[i]
+                dW[:,y[i]]-=X[i]
 
     # Right now the loss is a sum over all training examples, but we want it
     # to be an average instead so we divide by num_train.
     loss /= num_train
-
+    dW /=num_train
     # Add regularization to the loss.
     loss += reg * np.sum(W * W)
-
+    dW+=2*reg*W
     #############################################################################
     # TODO:                                                                     #
     # Compute the gradient of the loss function and store it dW.                #
@@ -70,14 +73,45 @@ def svm_loss_vectorized(W, X, y, reg):
     """
     loss = 0.0
     dW = np.zeros(W.shape)  # initialize the gradient as zero
-
+    num_classes = W.shape[1]
+    num_train = X.shape[0]
+    loss = 0.0
+    scores=X.dot(W)
+    correct_class_score=scores[range(num_train),y].reshape((num_train,1)) #!!!!!
+    
+    margin=np.maximum(np.zeros((scores.shape)),scores-correct_class_score+1)
+    margin[range(num_train),y]=0
+    
+    bin_margin=(margin > 0)*1
+    bin_y=np.zeros(margin.shape)
+    bin_y[range(num_train),y]=1
+    
+    
+    row_sum=np.sum(bin_margin,axis=1)   #!!!!!!!
+    bin_margin[np.arange(num_train),y]=-row_sum
+    dW+=np.dot(X.T,bin_margin)
+    
+    #for i in range(num_train):
+    #    for j in range(num_classes):
+    #        if margin[i,j] > 0:
+                #loss += margin
+                #dW[:,j]+=X[i]
+    #            dW[:,y[i]]-=X[i]
+    loss=np.sum(margin)
+    # Right now the loss is a sum over all training examples, but we want it
+    # to be an average instead so we divide by num_train.
+    loss /= num_train
+    dW /=num_train
+    # Add regularization to the loss.
+    loss += reg * np.sum(W * W)
+    dW+=2*reg*W
     #############################################################################
     # TODO:                                                                     #
     # Implement a vectorized version of the structured SVM loss, storing the    #
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

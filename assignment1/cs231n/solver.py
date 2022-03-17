@@ -29,9 +29,9 @@ class Solver(object):
 
     After the train() method returns, model.params will contain the parameters
     that performed best on the validation set over the course of training.
-    In addition, the instance variable solver.loss_history will contain a list
+    In addition, the instance variable #!solver.loss_history will contain a list
     of all losses encountered during training and the instance variables
-    solver.train_acc_history and solver.val_acc_history will be lists of the
+    #!solver.train_acc_history and solver.val_acc_history will be lists of the
     accuracies of the model on the training and validation set at each epoch.
 
     Example usage might look something like this:
@@ -100,7 +100,7 @@ class Solver(object):
           hyperparameters (see optim.py) but all update rules require a
           'learning_rate' parameter so that should always be present.
         - lr_decay: A scalar for learning rate decay; after each epoch the
-          learning rate is multiplied by this value.
+          learning rate is multiplied by this value. #!
         - batch_size: Size of minibatches used to compute loss and gradient
           during training.
         - num_epochs: The number of epochs to run for during training.

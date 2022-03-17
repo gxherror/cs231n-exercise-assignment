@@ -1,5 +1,6 @@
 from builtins import range
 from builtins import object
+from functools import cache
 import numpy as np
 
 from ..layers import *
@@ -39,7 +40,7 @@ class TwoLayerNet(object):
         - num_classes: An integer giving the number of classes to classify
         - weight_scale: Scalar giving the standard deviation for random
           initialization of the weights.
-        - reg: Scalar giving L2 regularization strength.
+        - reg: Scalar giving #!L2 regularization strength.
         """
         self.params = {}
         self.reg = reg
@@ -54,7 +55,10 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W2' and 'b2'.                         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        self.params['W1']=np.random.normal(0,weight_scale,input_dim*hidden_dim).reshape(input_dim,hidden_dim)
+        self.params['b1']=np.zeros(hidden_dim)
+        self.params['W2']=np.random.normal(0,weight_scale,hidden_dim*num_classes).reshape(hidden_dim,num_classes)
+        self.params['b2']=np.zeros(num_classes)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -87,7 +91,9 @@ class TwoLayerNet(object):
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        A1,cache1=affine_relu_forward(X,self.params['W1'],self.params['b1'])
+        A2,cache2=affine_relu_forward(A1,self.params['W2'],self.params['b2'])
+        scores=A2
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -111,7 +117,14 @@ class TwoLayerNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        loss,dl=softmax_loss(A2,y)
+        loss+=self.reg*(np.sum(self.params['W2']**2)+np.sum(self.params['W1']**2))/2
+        dx2,dw2,db2=affine_relu_backward(dl,cache2)
+        dx1,dw1,db1=affine_relu_backward(dx2,cache1)
+        grads['W2']=dw2+self.reg*self.params['W2']
+        grads['b2']=db2
+        grads['W1']=dw1+self.reg*self.params['W1']
+        grads["b1"]=db1
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

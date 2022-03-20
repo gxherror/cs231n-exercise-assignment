@@ -62,7 +62,15 @@ class ThreeLayerConvNet(object):
         # the start of the loss() function to see how that happens.                #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        C,H,W=input_dim
+        self.params["W1"]=np.random.normal(0.0,weight_scale,size=(num_filters,C,filter_size,filter_size))
+        self.params["b1"]=np.zeros(num_filters)
+        
+        self.params["W2"]=np.random.normal(0.0,weight_scale,size=((num_filters*H*W)//4,hidden_dim))
+        self.params["b2"]=np.zeros(hidden_dim)
+        
+        self.params["W3"]=np.random.normal(0.0,weight_scale,size=(hidden_dim,num_classes))
+        self.params["b3"]=np.zeros(num_classes)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -86,6 +94,7 @@ class ThreeLayerConvNet(object):
         # pass conv_param to the forward pass for the convolutional layer
         # Padding and stride chosen to preserve the input spatial size
         filter_size = W1.shape[2]
+        print(filter_size)
         conv_param = {"stride": 1, "pad": (filter_size - 1) // 2}
 
         # pass pool_param to the forward pass for the max-pooling layer
@@ -101,7 +110,12 @@ class ThreeLayerConvNet(object):
         # cs231n/layer_utils.py in your implementation (already imported).         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        cl_out,cl_cache,=conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        hl_out,hl_cache=affine_relu_forward(cl_out, W2, b2)
+        ol_out,ol_cache=affine_forward(hl_out, W3, b3)
+        
+        y_pred=np.argmax(ol_out,axis=1)
+        scores=np.sum(y==y_pred)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -124,9 +138,19 @@ class ThreeLayerConvNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
+        loss,dz=softmax_loss(ol_out, y)
+        loss+=self.reg*(np.sum(self.params['W1']**2)+np.sum(self.params['W2']**2)+np.sum(self.params['W3']**2))/2
+        dz+=self.reg*(np.sum(self.params['W1'])+np.sum(self.params['W2'])+np.sum(self.params['W3']))
+        dx3,dw3,db3=affine_backward(dz,ol_cache)
+        grads['W3']=dw3+self.reg*self.params['W3']
+        grads['b3']=db3
+        dx2,dw2,db2=affine_relu_backward(dx3,hl_cache)
+        grads['W2']=dw2+self.reg*self.params['W2']
+        grads['b2']=db2
+        _,dw1,db1=conv_relu_pool_backward(dx2,cl_cache)
+        grads['W1']=dw1+self.reg*self.params['W1']
+        grads['b1']=db1
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #

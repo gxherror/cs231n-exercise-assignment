@@ -93,7 +93,6 @@ def conv_backward_strides(dout, cache):
     _, _, out_h, out_w = dout.shape
 
     db = np.sum(dout, axis=(0, 2, 3))
-
     dout_reshaped = dout.transpose(1, 0, 2, 3).reshape(F, -1)
     dw = dout_reshaped.dot(x_cols.T).reshape(w.shape)
 

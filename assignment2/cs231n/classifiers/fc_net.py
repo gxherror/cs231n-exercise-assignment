@@ -1,6 +1,7 @@
 from builtins import range
 from builtins import object
 import numpy as np
+from torch import digamma
 
 from ..layers import *
 from ..layer_utils import *
@@ -73,7 +74,24 @@ class FullyConnectedNet(object):
         # parameters should be initialized to zeros.                               #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        self.cache={}
+        for i in range(self.num_layers):
+            if (i==0):ind=input_dim
+            else:ind=hidden_dims[i-1]
+            
+            if (i==(self.num_layers-1)):outd=num_classes
+            else:outd=hidden_dims[i]
+            
+            W='W'+str(i+1)
+            b='b'+str(i+1)
+            gamma='gamma'+str(i+1)
+            beta='beta'+str(i+1)
+            
+            self.params[W]=np.random.normal(0,weight_scale,ind*outd).reshape(ind,outd)
+            self.params[b]=np.zeros(outd)
+            if self.normalization=='batchnorm':
+                self.params[gamma]=np.ones(outd)
+                self.params[beta]=np.zeros(outd)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -97,7 +115,7 @@ class FullyConnectedNet(object):
         # pass of the second batch normalization layer, etc.
         self.bn_params = []
         if self.normalization == "batchnorm":
-            self.bn_params = [{"mode": "train"} for i in range(self.num_layers - 1)]
+            self.bn_params = [{"mode": "train"} for i in range(self.num_layers)]#!!!!!!!!!!!!!!!
         if self.normalization == "layernorm":
             self.bn_params = [{} for i in range(self.num_layers - 1)]
 
@@ -147,7 +165,24 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        before_a=X
+        for i in range(self.num_layers):
+            W='W'+str(i+1)
+            b='b'+str(i+1)
+            gamma='gamma'+str(i+1)
+            beta='beta'+str(i+1)
+            
+            z,cache_affine=affine_forward(before_a,self.params[W],self.params[b])
+            self.cache['cache_affine'+str(i+1)]=cache_affine
+            
+            if (self.normalization=='batchnorm'):
+                z,cache_bn=batchnorm_forward(z,self.params[gamma],self.params[beta],self.bn_params[i])
+                self.cache['cache_bn'+str(i+1)]=cache_bn
+                
+            a,cache_relu=relu_forward(z)
+            self.cache['cache_relu'+str(i+1)]=cache_relu
+            before_a=a
+        scores=before_a
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -164,7 +199,7 @@ class FullyConnectedNet(object):
         # TODO: Implement the backward pass for the fully connected net. Store the #
         # loss in the loss variable and gradients in the grads dictionary. Compute #
         # data loss using softmax, and make sure that grads[k] holds the gradients #
-        # for self.params[k]. Don't forget to add L2 regularization!               #
+        # for self.params[k]. #!Don't forget to add L2 regularization!               #
         #                                                                          #
         # When using batch/layer normalization, you don't need to regularize the   #
         # scale and shift parameters.                                              #
@@ -174,7 +209,23 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        loss,dl=softmax_loss(before_a,y)
+        for i in range(self.num_layers):
+            loss+=self.reg*np.sum(self.params['W'+str(i+1)]**2)/2
+            if (self.normalization=='batchnorm'):
+                loss+=self.reg*np.sum(self.params['gamma'+str(i+1)]**2)/2
+                loss+=self.reg*np.sum(self.params['beta'+str(i+1)]**2)/2
+        before_da=dl
+        for i in range(self.num_layers,0,-1):
+            dx=relu_backward(before_da,self.cache['cache_relu'+str(i)])
+            if self.normalization == "batchnorm":
+                dx,dgamma,dbeta=batchnorm_backward(dx,self.cache['cache_bn'+str(i)])
+                grads['gamma'+str(i)]=dgamma
+                grads['beta'+str(i)]=dbeta
+            da,dw,db=affine_backward(dx,self.cache['cache_affine'+str(i)])
+            grads['W'+str(i)]=dw+self.reg*self.params['W'+str(i)]
+            grads['b'+str(i)]=db
+            before_da=da
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

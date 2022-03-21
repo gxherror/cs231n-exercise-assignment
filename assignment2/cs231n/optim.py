@@ -1,3 +1,4 @@
+from more_itertools import first
 import numpy as np
 
 """
@@ -18,7 +19,7 @@ Inputs:
 
 Returns:
   - next_w: The next point after the update.
-  - config: The config dictionary to be passed to the next iteration of the
+  - config: The config dictionary to be passed to the #!next iteration of the
     update rule.
 
 NOTE: For most update rules, the default learning rate will probably not
@@ -62,14 +63,15 @@ def sgd_momentum(w, dw, config=None):
     config.setdefault("learning_rate", 1e-2)
     config.setdefault("momentum", 0.9)
     v = config.get("velocity", np.zeros_like(w))
-
+    
     next_w = None
     ###########################################################################
     # TODO: Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    v=config['momentum']*v-config['learning_rate']*dw
+    next_w=w+v
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -96,7 +98,7 @@ def rmsprop(w, dw, config=None):
     if config is None:
         config = {}
     config.setdefault("learning_rate", 1e-2)
-    config.setdefault("decay_rate", 0.99)
+    config.setdefault("decay_rate", 0.999)
     config.setdefault("epsilon", 1e-8)
     config.setdefault("cache", np.zeros_like(w))
 
@@ -107,7 +109,8 @@ def rmsprop(w, dw, config=None):
     # config['cache'].                                                        #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    config['cache']=config['decay_rate']*config['cache']+(1-config['decay_rate'])*dw*dw
+    next_w=w-config['learning_rate']*dw/(np.sqrt(config['cache'])+config['epsilon'])
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -152,7 +155,12 @@ def adam(w, dw, config=None):
     # using it in any calculations.                                           #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    config['t']+=1
+    config['m']=config['beta1']*config['m']+(1-config['beta1'])*dw
+    config['v']=config['beta2']*config['v']+(1-config['beta2'])*dw*dw
+    first_unbias=config['m']/(1-config['beta1']**config['t'])
+    second_unbias=config['v']/(1-config['beta2']**config['t'])
+    next_w=w-first_unbias*config['learning_rate']/(np.sqrt(second_unbias)+config['epsilon'])
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

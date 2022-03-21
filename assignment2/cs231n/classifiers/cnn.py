@@ -94,7 +94,6 @@ class ThreeLayerConvNet(object):
         # pass conv_param to the forward pass for the convolutional layer
         # Padding and stride chosen to preserve the input spatial size
         filter_size = W1.shape[2]
-        print(filter_size)
         conv_param = {"stride": 1, "pad": (filter_size - 1) // 2}
 
         # pass pool_param to the forward pass for the max-pooling layer
@@ -110,12 +109,13 @@ class ThreeLayerConvNet(object):
         # cs231n/layer_utils.py in your implementation (already imported).         #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        cl_out,cl_cache,=conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        cl_out,cl_cache=conv_relu_pool_forward(X, W1, b1, conv_param, pool_param)
+        
         hl_out,hl_cache=affine_relu_forward(cl_out, W2, b2)
+        
         ol_out,ol_cache=affine_forward(hl_out, W3, b3)
         
-        y_pred=np.argmax(ol_out,axis=1)
-        scores=np.sum(y==y_pred)
+        scores=ol_out
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

@@ -1,5 +1,6 @@
 from builtins import range
 from math import gamma
+from pprint import pprint
 from traceback import print_tb
 import numpy as np
 
@@ -403,9 +404,9 @@ def layernorm_forward(x, gamma, beta, ln_param):
     During both training and test-time, the incoming data is normalized per data-point,
     before being scaled by gamma and beta parameters identical to that of batch normalization.
 
-    Note that in contrast to batch normalization, the behavior during train and test-time for
-    layer normalization are identical, and we do not need to keep track of running averages
-    of any sort.
+    Note that in contrast to batch normalization, #!the behavior during train and test-time for
+    #!layer normalization are identical, and we do not need to keep track of running averages
+    #!of any sort.
 
     Input:
     - x: Data of shape (N, D)
@@ -431,9 +432,13 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # the batch norm code and leave it almost unchanged?                      #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    bn_param={}
+    bn_param['mode']='train'
+    bn_param['eps']=eps
+    bn_param['momentum']=0
+    out,cache=batchnorm_forward(x.T,gamma.reshape(-1,1),beta.reshape(-1,1),bn_param)
+    out=out.T
     pass
-
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -465,7 +470,11 @@ def layernorm_backward(dout, cache):
     # still apply!                                                            #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    dx,_,_=batchnorm_backward(dout.T,cache)
+    dx=dx.T
+    dgamma=np.sum(dout*cache[0].T,axis=0)
+    dbeta=np.sum(dout,axis=0)
+    
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -479,7 +488,7 @@ def dropout_forward(x, dropout_param):
     """Forward pass for inverted dropout.
 
     Note that this is different from the vanilla version of dropout.
-    Here, p is the probability of keeping a neuron output, as opposed to
+    #!Here, p is the probability of keeping a neuron output, as opposed to
     the probability of dropping a neuron output.
     See http://cs231n.github.io/neural-networks-2/#reg for more details.
 
@@ -494,7 +503,7 @@ def dropout_forward(x, dropout_param):
         in real networks.
 
     Outputs:
-    - out: Array of the same shape as x.
+    - #!out: Array of the same shape as x.
     - cache: tuple (dropout_param, mask). In training mode, mask is the dropout
       mask that was used to multiply the input; in test mode, mask is None.
     """
@@ -511,7 +520,8 @@ def dropout_forward(x, dropout_param):
         # Store the dropout mask in the mask variable.                        #
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        mask=np.random.binomial(1,p,x.shape)
+        out=x*mask
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -521,9 +531,9 @@ def dropout_forward(x, dropout_param):
     elif mode == "test":
         #######################################################################
         # TODO: Implement the test phase forward pass for inverted dropout.   #
-        #######################################################################
+        #######################################################################           
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        out=x*p
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -552,8 +562,8 @@ def dropout_backward(dout, cache):
         #######################################################################
         # TODO: Implement training phase backward pass for inverted dropout   #
         #######################################################################
-        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****             
+        dx=dout*mask
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -597,6 +607,8 @@ def conv_forward_naive(x, w, b, conv_param):
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    x_pad=None
+    w_conv=None
     pad=conv_param['pad']
     stride=conv_param['stride']
     N,C,H,W=x.shape
@@ -648,6 +660,7 @@ def conv_backward_naive(dout, cache):
     F,C,HH,WW=w.shape
     dx=np.zeros(x.shape)
     dw=np.zeros(w.shape)
+    dout_pad=None
     dout_stride=np.zeros((N,F,(H_out-1)*stride+1,(W_out-1)*stride+1))
     for i in range(dout.shape[2]): 
       for j in range(dout.shape[3]):
@@ -655,6 +668,7 @@ def conv_backward_naive(dout, cache):
     
     dout_pad=np.pad(dout_stride,((0,),(0,),(pad,),(pad,)),'constant',constant_values=(0,0)) 
     #dout_pad without error
+    w_t=None
     w_t=np.transpose(w,(1,0,2,3))
     for n in range(N):
       for c in range(C):

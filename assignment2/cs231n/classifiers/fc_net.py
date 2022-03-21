@@ -172,6 +172,7 @@ class FullyConnectedNet(object):
             b='b'+str(i+1)
             
             z,cache_affine=affine_forward(before_a,self.params[W],self.params[b])
+            
             self.cache['cache_affine'+str(i+1)]=cache_affine
             if (self.normalization=='batchnorm')and(i!=(self.num_layers-1)):
                 gamma='gamma'+str(i+1)
@@ -180,6 +181,11 @@ class FullyConnectedNet(object):
                 self.cache['cache_bn'+str(i+1)]=cache_bn
                 
             a,cache_relu=relu_forward(z)
+            
+            if (self.use_dropout):
+                a,cache_dp=dropout_forward(a,self.dropout_param)
+                self.cache['cache_dp'+str(i+1)]=cache_dp
+                
             self.cache['cache_relu'+str(i+1)]=cache_relu
             before_a=a
         scores=before_a
@@ -217,7 +223,11 @@ class FullyConnectedNet(object):
                 loss+=self.reg*np.sum(self.params['beta'+str(i+1)]**2)/2
         before_da=dl
         for i in range(self.num_layers,0,-1):
+            if (self.use_dropout):
+                before_da=dropout_backward(before_da,self.cache['cache_dp'+str(i)])
+            
             dx=relu_backward(before_da,self.cache['cache_relu'+str(i)])
+            
             if self.normalization == "batchnorm"and(i!=self.num_layers):
                 dx,dgamma,dbeta=batchnorm_backward(dx,self.cache['cache_bn'+str(i)])
                 grads['gamma'+str(i)]=dgamma+self.reg*self.params['gamma'+str(i)]

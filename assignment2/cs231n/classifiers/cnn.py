@@ -139,8 +139,10 @@ class ThreeLayerConvNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         loss,dz=softmax_loss(ol_out, y)
-        loss+=self.reg*(np.sum(self.params['W1']**2)+np.sum(self.params['W2']**2)+np.sum(self.params['W3']**2))/2
-        dz+=self.reg*(np.sum(self.params['W1'])+np.sum(self.params['W2'])+np.sum(self.params['W3']))
+        loss+=self.reg*np.sum(self.params['W1']**2)/2
+        loss+=self.reg*np.sum(self.params['W2']**2)/2
+        loss+=self.reg*np.sum(self.params['W3']**2)/2
+        #dz+=self.reg*(np.sum(self.params['W1'])+np.sum(self.params['W2'])+np.sum(self.params['W3']))
         dx3,dw3,db3=affine_backward(dz,ol_cache)
         grads['W3']=dw3+self.reg*self.params['W3']
         grads['b3']=db3

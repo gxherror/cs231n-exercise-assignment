@@ -72,9 +72,9 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     # and cache variables respectively.                                          #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    next_h=np.tanh(x.dot(Wx)+prev_h.dot(Wh)+b)
+    cache=x,Wx,prev_h,Wh,b,next_h
     pass
-
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -104,7 +104,13 @@ def rnn_step_backward(dnext_h, cache):
     # of the output value from tanh.                                             #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    x,Wx,prev_h,Wh,b,next_h=cache
+    dtemp=(1-next_h**2)*dnext_h
+    db=np.sum(dtemp,axis=0)
+    dx=dtemp.dot(Wx.T)
+    dWx=x.T.dot(dtemp)
+    dprev_h=dtemp.dot(Wh.T)
+    dWh=prev_h.T.dot(dtemp)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -139,7 +145,14 @@ def rnn_forward(x, h0, Wx, Wh, b):
     # above. You can use a for loop to help compute the forward pass.            #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    h=np.zeros((x.shape[0],x.shape[1],h0.shape[1]))
+    T=x.shape[1]
+    for i in range(T):
+        if i==0:prev_h=h0
+        else:prev_h=h[:,i-1,:]
+        next_h,cache=rnn_step_forward(x[:,i,:],prev_h,Wx,Wh,b)
+        h[:,i,:]=next_h
+    cache=x,Wx,h0,Wh,b,h
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -174,7 +187,8 @@ def rnn_backward(dh, cache):
     # defined above. You can use a for loop to help compute the backward pass.   #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    x,Wx,h0,Wh,b,h=cache
+    T=dh.shape[1]
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

@@ -150,7 +150,7 @@ def rnn_forward(x, h0, Wx, Wh, b):
     for i in range(T):
         if i==0:prev_h=h0
         else:prev_h=h[:,i-1,:]
-        next_h,cache=rnn_step_forward(x[:,i,:],prev_h,Wx,Wh,b)
+        next_h,_=rnn_step_forward(x[:,i,:],prev_h,Wx,Wh,b)
         h[:,i,:]=next_h
     cache=x,Wx,h0,Wh,b,h
     pass
@@ -189,6 +189,24 @@ def rnn_backward(dh, cache):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     x,Wx,h0,Wh,b,h=cache
     T=dh.shape[1]
+    db=np.zeros(b.shape)
+    dx=np.zeros(x.shape)
+    dWx=np.zeros(Wx.shape)
+    dWh=np.zeros(Wh.shape)
+    dh_step=0
+    for i in range(T-1,-1,-1):
+        
+        if i==0:cache_step=x[:,i,:],Wx,h0,Wh,b,h[:,i,:]
+        else: cache_step=x[:,i,:],Wx,h[:,i-1,:],Wh,b,h[:,i,:]
+        
+        dx_step, dh_step, dWx_step, dWh_step, db_step=rnn_step_backward(dh[:,i,:]+dh_step,cache_step)
+        
+        db+=db_step
+        dWx+=dWx_step
+        dWh+=dWh_step
+        dx[:,i,:]+=dx_step
+        
+        if i==0:dh0=dh_step
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -221,7 +239,7 @@ def word_embedding_forward(x, W):
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

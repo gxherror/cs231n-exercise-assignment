@@ -7,8 +7,8 @@ __pycache__/
 *.so
 
 #dataset
-datasets/
-
+cifar-10-batches-py
+coco_captioning
 
 # Distribution / packaging
 .Python

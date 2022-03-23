@@ -239,7 +239,9 @@ def word_embedding_forward(x, W):
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    
+    out=np.zeros((x.shape[0],x.shape[1],W.shape[1]))
+    out[:,:]=W[x[:,:]]
+    cache=out,x,W
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -273,7 +275,14 @@ def word_embedding_backward(dout, cache):
     # HINT: Look up the function np.add.at                                       #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    out,x,W=cache
+    dW=np.zeros(W.shape)
+    x_reshape=x.reshape((x.shape[0]*x.shape[1]))
+    dout_reshape=(np.transpose(dout,(2,0,1))).reshape((dout.shape[2],-1))
+    dout_reshape=np.transpose(dout_reshape,(1,0))
+    #dW[x_reshape]+=dout_reshape[x_reshape]
+    np.add.at(dW[:],x_reshape,dout_reshape[:])
+   
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -322,7 +331,7 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     # You may want to use the numerically stable sigmoid implementation above.  #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

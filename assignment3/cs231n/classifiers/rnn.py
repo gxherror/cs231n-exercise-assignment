@@ -149,13 +149,14 @@ class CaptioningRNN:
         # in your implementation, if needed.                                       #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        
         h0,cache_proj=affine_forward(features,W_proj,b_proj)#(N,D)@(D,H)
         
         x,cache_embed=word_embedding_forward(captions_in,W_embed)#without bias
-        
-        h,cache_rnn=rnn_forward(x,h0,Wx,Wh,b)
-        
+        if (self.cell_type=='rnn'):
+          h,cache_rnn=rnn_forward(x,h0,Wx,Wh,b)
+        elif(self.cell_type=='lstm'):
+          h,cache_lstm=lstm_forward(x,h0,Wx,Wh,b)
         scores,cache_vocab=temporal_affine_forward(h,W_vocab,b_vocab)
         
         loss,dl=temporal_softmax_loss(scores,captions_out,mask)
@@ -167,7 +168,12 @@ class CaptioningRNN:
         #                             END OF YOUR CODE                             #
         ############################################################################
         dh,dW_vocab,db_vocab=temporal_affine_backward(dl,cache_vocab)
-        dx,dh0,dWx,dWh,db=rnn_backward(dh,cache_rnn)
+        
+        if (self.cell_type=='rnn'):
+          dx,dh0,dWx,dWh,db=rnn_backward(dh,cache_rnn)
+        elif(self.cell_type=='lstm'):
+          dx,dh0,dWx,dWh,db=lstm_backward(dh,cache_lstm)
+          
         dW_embed=word_embedding_backward(dx,cache_embed)
         df,dW_proj,db_proj=affine_backward(dh0,cache_proj)
         
@@ -242,12 +248,17 @@ class CaptioningRNN:
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         h0,_=affine_forward(features,W_proj,b_proj)#(N,D)@(D,H)
+        c0=np.zeros(h0.shape)
         captions[:,0]=1
         h=h0
+        c=c0
         for i in range(max_length):
           x,_=word_embedding_forward((captions[:,i]).reshape(captions.shape[0],1),W_embed)#without bias
           x=x.reshape((x.shape[0],x.shape[2]))
-          h,_=rnn_step_forward(x,h,Wx,Wh,b)
+          if (self.cell_type=='rnn'):
+            h,_=rnn_step_forward(x,h,Wx,Wh,b)
+          elif(self.cell_type=='lstm'):
+            h,c,_=lstm_step_forward(x,h,c,Wx,Wh,b)
           h_reshape=h.reshape((h.shape[0],1,h.shape[1]))
           scores,_=temporal_affine_forward(h_reshape,W_vocab,b_vocab)
           scores=scores.reshape((scores.shape[0],scores.shape[2]))

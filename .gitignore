@@ -9,7 +9,7 @@ __pycache__/
 #dataset
 cifar-10-batches-py
 coco_captioning
-
+datasets
 # Distribution / packaging
 .Python
 build/

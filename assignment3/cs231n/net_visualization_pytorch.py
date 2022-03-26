@@ -1,7 +1,10 @@
+import imp
 import torch
 import random
 import torchvision.transforms as T
 import numpy as np
+import torch.nn.functional as F
+from zmq import device
 from .image_utils import SQUEEZENET_MEAN, SQUEEZENET_STD
 from scipy.ndimage.filters import gaussian_filter1d
 
@@ -33,7 +36,11 @@ def compute_saliency_maps(X, y, model):
     # the gradients with a backward pass.                                        #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    scores=model(X)
+    loss=F.cross_entropy(scores,y)
+    loss.backward()
+    out=torch.max(X.grad,1)
+    saliency=out.values
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -59,8 +66,8 @@ def make_fooling_image(X, target_y, model):
     # Initialize our fooling image to the input image, and make it require gradient
     X_fooling = X.clone()
     X_fooling = X_fooling.requires_grad_()
-
     learning_rate = 1
+    i=0
     ##############################################################################
     # TODO: Generate a fooling image X_fooling that the model will classify as   #
     # the class target_y. You should perform gradient ascent on the score of the #
@@ -75,6 +82,18 @@ def make_fooling_image(X, target_y, model):
     # You can print your progress over iterations to check your algorithm.       #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    while(1):
+        scores=model(X_fooling)
+        _,prev_y=scores.max(1)
+        if(prev_y==target_y):break
+        tensor_y=torch.tensor(target_y).view(1)
+        loss=F.cross_entropy(scores,tensor_y)
+        loss.backward()
+        with torch.no_grad():
+            dX=(learning_rate*(X_fooling.grad))/torch.sum((X_fooling.grad)**2)
+            X_fooling-=dX
+            X_fooling.grad.zero_()
+        i+=1
 
     pass
 
@@ -93,7 +112,15 @@ def class_visualization_update_step(img, model, target_y, l2_reg, learning_rate)
     # Be very careful about the signs of elements in your code.            #
     ########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    scores=model(img)
+    tensor_y=torch.tensor(target_y).view(1)
+    loss=F.cross_entropy(scores,tensor_y)
+    score,_=scores.max(1)
+    score-=l2_reg*torch.sum((img)**2)
+    loss.backward()
+    with torch.no_grad():
+            img+=img.grad
+            img.grad.zero_()
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

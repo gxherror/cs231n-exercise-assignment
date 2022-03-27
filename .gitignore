@@ -7,9 +7,10 @@ __pycache__/
 *.so
 
 #dataset
-cifar-10-batches-py
-coco_captioning
-datasets
+cifar-10-batches-py/
+coco_captioning/
+datasets/
+MNIST_data/
 # Distribution / packaging
 .Python
 build/

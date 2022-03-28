@@ -1,3 +1,4 @@
+from turtle import position
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -37,7 +38,8 @@ class PositionalEncoding(nn.Module):
         # less than 5 lines of code.                                               #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        self.embed_dim=embed_dim
+        self.max_len=max_len
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -47,7 +49,6 @@ class PositionalEncoding(nn.Module):
 
         # Make sure the positional encodings will be saved with the model
         # parameters (mostly for completeness).
-        self.register_buffer('pe', pe)
 
     def forward(self, x):
         """
@@ -69,7 +70,15 @@ class PositionalEncoding(nn.Module):
         # afterward. This should only take a few lines of code.                    #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        embed_dim=self.embed_dim 
+        position=torch.arange(0,S).unsqueeze(1)
+        pe = torch.zeros(S, embed_dim)
+        div_term = torch.exp(torch.arange(0, embed_dim, 2) * -(math.log(10000.0) / embed_dim))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0)
+        output=x+pe
+        output=self.dropout(output)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -77,6 +86,8 @@ class PositionalEncoding(nn.Module):
         #                             END OF YOUR CODE                             #
         ############################################################################
         return output
+
+
 
 
 class MultiHeadAttention(nn.Module):
@@ -117,7 +128,7 @@ class MultiHeadAttention(nn.Module):
         self.query = nn.Linear(embed_dim, embed_dim)
         self.value = nn.Linear(embed_dim, embed_dim)
         self.proj = nn.Linear(embed_dim, embed_dim)
-        
+
         ############################################################################
         # TODO: Initialize any remaining layers and parameters to perform the      #
         # attention operation as defined in Transformer_Captioning.ipynb. We will  #
@@ -125,7 +136,9 @@ class MultiHeadAttention(nn.Module):
         # solution is less than 5 lines.                                           #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        self.embed_dim=embed_dim
+        self.num_heads=num_heads
+        self.dropout=nn.Dropout(dropout)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -173,7 +186,46 @@ class MultiHeadAttention(nn.Module):
         #     function masked_fill may come in handy.                              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        embed_dim=self.embed_dim
+        H=self.num_heads
+        
+        lq,lk,lv,lp=self.query,self.key,self.value,self.proj
+        
+        query=lq(query)
+        key=lk(key)
+        value=lv(value)
+        
+        key=key.view(N,T,H,D//H).transpose(1,2) #(N, T, D)->(N, H, T ,D//H)
 
+        
+        value=value.view(N,T,H,D//H).transpose(1,2) #(N, T, D)->(N, H,T, D//H)
+
+        
+        query=query.view(N,S,H,D//H).transpose(1,2) #(N, S, D)->(N, H, S,D//H)
+
+        
+
+        
+        out=torch.matmul(query,key.transpose(-2,-1))/math.sqrt(D//H)#(N,H,T,S)
+        if attn_mask!=None:
+          out=out.masked_fill(attn_mask==0,-1e9)
+        
+        out=F.softmax(out,dim=-1)
+
+        attn=self.dropout(out)
+        
+        out=torch.matmul(attn,value)
+
+        out=out.transpose(1,2)#.contiguous()
+
+        out=out.reshape(N,-1,D)
+
+        out=lp(out)
+        
+        output=out
+        
+        
+        
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

@@ -266,16 +266,20 @@ def build_dc_generator(noise_dim=NOISE_DIM):
         nn.Linear(noise_dim,1024),
         nn.ReLU(),
         nn.BatchNorm1d(1024),
+        
         nn.Linear(1024,7*7*128),
         nn.ReLU(),
         nn.BatchNorm1d(7*7*128),
+        
         Unflatten(),
+        
         nn.ConvTranspose2d(128,64,kernel_size=4,stride=2, padding=1),
         nn.ReLU(),
         nn.BatchNorm2d(64),
+        
         nn.ConvTranspose2d(64,1,kernel_size=4,stride=2,padding=1),
         nn.Tanh(),
-        #Flatten(),        
+        Flatten(),        
     )
     pass
     return model

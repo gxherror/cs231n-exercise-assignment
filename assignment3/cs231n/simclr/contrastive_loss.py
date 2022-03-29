@@ -9,7 +9,7 @@ def sim(z_i, z_j):
     - z_i: 1xD tensor.
     - z_j: 1xD tensor.
     
-    Returns:
+    Returns
     - A scalar value that is the normalized dot product between z_i and z_j.
     """
     norm_dot_product = None
@@ -18,8 +18,7 @@ def sim(z_i, z_j):
     #                                                                            #
     # HINT: torch.linalg.norm might be helpful.                                  #
     ##############################################################################
-    
-    
+    norm_dot_product=torch.sum(z_i*z_j)/(torch.linalg.norm(z_i)*torch.linalg.norm(z_j))
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -55,7 +54,11 @@ def simclr_loss_naive(out_left, out_right, tau):
         # Hint: Compute l(k, k+N) and l(k+N, k).                                     #
         ##############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        part1=-torch.log( (torch.exp(sim(z_k,z_k_N)/tau)) /
+                         (torch.sum(torch.Tensor([torch.exp(sim(z_k,out[i])/tau)for i in range(2*N)]))-torch.exp(sim(z_k,z_k)/tau)) )
+        part2=-torch.log( (torch.exp(sim(z_k_N,z_k)/tau))/
+                         (torch.sum(torch.Tensor([torch.exp(sim(z_k_N,out[i])/tau)for i in range(2*N)]))-torch.exp(sim(z_k_N,z_k_N)/tau)) )
+        total_loss=total_loss+part1+part2
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -87,9 +90,11 @@ def sim_positive_pairs(out_left, out_right):
     #                                                                            #
     # HINT: torch.linalg.norm might be helpful.                                  #
     ##############################################################################
-    
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    N=out_left.shape[0]
+    pos_pairs=torch.zeros((N,1)) #!None->zeros
+    for pos in range(N):   #??????????
+        pos_pairs[pos]=sim(out_left[pos],out_right[pos])
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -117,7 +122,11 @@ def compute_sim_matrix(out):
     ##############################################################################
     
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    M=out.shape[0]#M=2N
+    sim_matrix=torch.zeros((M,M))
+    for pos in range(M):
+    #pos=torch.arange(M).unsqueeze(1)
+        sim_matrix[pos]=sim_positive_pairs(out[pos].repeat(M,1),out).view(1,-1)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -148,7 +157,7 @@ def simclr_loss_vectorized(out_left, out_right, tau, device='cuda'):
     # Step 1: Use sim_matrix to compute the denominator value for all augmented samples.
     # Hint: Compute e^{sim / tau} and store into exponential, which should have shape 2N x 2N.
     exponential = None
-    
+    exponential=torch.exp(sim_matrix/tau)
     # This binary mask zeros out terms where k=i.
     mask = (torch.ones_like(exponential, device=device) - torch.eye(2 * N, device=device)).to(device).bool()
     
@@ -163,13 +172,14 @@ def simclr_loss_vectorized(out_left, out_right, tau, device='cuda'):
     # Option 1: Extract the corresponding indices from sim_matrix. 
     # Option 2: Use sim_positive_pairs().
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    denom=torch.sum(exponential,dim=1)#(2*N,1)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     
     # Step 3: Compute the numerator value for all augmented samples.
     numerator = None
+    numerator =torch.exp(sim_positive_pairs(out_left,out_right)/tau) #(N,1)
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     pass
@@ -178,7 +188,10 @@ def simclr_loss_vectorized(out_left, out_right, tau, device='cuda'):
     
     # Step 4: Now that you have the numerator and denominator for all augmented samples, compute the total loss.
     loss = None
+    part1=-torch.sum(torch.log(numerator.view(1,N)/denom[:N]))
+    part2=-torch.sum(torch.log(numerator.view(1,N)/denom[N:]))
     
+    loss=(part1+part2)/(2*N)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################

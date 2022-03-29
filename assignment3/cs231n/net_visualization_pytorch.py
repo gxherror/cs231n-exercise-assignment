@@ -84,8 +84,9 @@ def make_fooling_image(X, target_y, model):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     while(1):
         scores=model(X_fooling)
-        _,prev_y=scores.max(1)
+        score,prev_y=scores.max(1)
         if(prev_y==target_y):break
+        print(score)
         tensor_y=torch.tensor(target_y).view(1)
         loss=F.cross_entropy(scores,tensor_y)
         loss.backward()

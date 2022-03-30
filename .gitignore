@@ -134,3 +134,4 @@ dmypy.json
 .pyre/
 assignment3/data/cifar-10-python.tar.gz
 assignment3/pretrained_model/pretrained_simclr_model.pth
+data/cifar-10-python.tar.gz
